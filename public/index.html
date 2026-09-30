@@ -1,127 +1,390 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>El Último en Pie</title>
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body { background-color: #0d0914; color: #ffffff; font-family: sans-serif; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EL ÚLTIMO EN PIE - Battle Royale</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;900&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #090a10;
+            --card-bg: rgba(22, 27, 46, 0.92);
+            --neon-purple: #9d4edd;
+            --neon-pink: #ff007f;
+            --neon-cyan: #00f0ff;
+            --neon-green: #00ff88;
+            --neon-red: #ff3366;
+            --gold: #ffb703;
+            --text: #ffffff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+        
+        body {
+            background: radial-gradient(circle at center, #1a103c 0%, var(--bg-dark) 100%);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            overflow-x: hidden;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 25px;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 0 40px rgba(157, 78, 221, 0.25);
+            text-align: center;
+            position: relative;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.7rem;
+            font-weight: 900;
+            background: linear-gradient(45deg, var(--neon-pink), var(--neon-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+
+        p.subtitle { color: #8a8dbe; font-size: 0.8rem; margin-bottom: 20px; font-weight: 600; text-transform: uppercase; }
+
+        .prize-badge {
+            background: rgba(255, 183, 3, 0.15);
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 800;
+            font-size: 1.1rem;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+
+        .input-group { margin-bottom: 15px; text-align: left; }
+        label { display: block; font-size: 0.75rem; color: var(--neon-cyan); margin-bottom: 5px; font-weight: 700; text-transform: uppercase; }
+        
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(10, 12, 20, 0.8);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin-top: 10px;
+            color: white;
+            text-transform: uppercase;
+        }
+
+        .btn-primary { background: linear-gradient(90deg, var(--neon-purple), var(--neon-pink)); }
+        .btn-success { background: linear-gradient(90deg, #00b894, var(--neon-green)); color: #000; font-weight: 900; }
+        .btn-danger { background: linear-gradient(90deg, #d63031, var(--neon-red)); }
+        .btn-link { background: transparent; color: #8a8dbe; font-size: 0.8rem; border: none; text-decoration: underline; cursor: pointer; margin-top: 12px; }
+
+        .pass-box {
+            background: rgba(0, 255, 136, 0.15);
+            border: 2px dashed var(--neon-green);
+            padding: 12px;
+            border-radius: 12px;
+            margin: 15px 0;
+            display: none;
+        }
+        .pass-code { font-family: 'Orbitron', monospace; font-size: 1.5rem; color: var(--neon-green); font-weight: 900; }
+
+        .option-btn {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            width: 100%;
+            text-align: left;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .option-btn:hover { background: rgba(0, 240, 255, 0.2); border-color: var(--neon-cyan); }
+
+        .timer-bar {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.8rem;
+            color: var(--neon-pink);
+            font-weight: 900;
+            margin: 10px 0;
+        }
+
+        .level-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 900;
+            margin-bottom: 10px;
+        }
+        .level-FÁCIL { background: #00b894; color: #000; }
+        .level-MEDIO { background: #fdcb6e; color: #000; }
+        .level-DIFÍCIL { background: #d63031; color: #fff; }
+
+        .players-list {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 10px;
+            max-height: 120px;
+            overflow-y: auto;
+            text-align: left;
+            margin-bottom: 10px;
+        }
+        .player-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; }
+
+        .hidden { display: none !important; }
+    </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-4">
-  <div class="w-full max-w-md bg-slate-900 border border-purple-900/50 rounded-2xl p-6 shadow-2xl text-center">
-    
-    <!-- ENCABEZADO -->
-    <h1 class="text-3xl font-extrabold text-yellow-400 mb-2">👑 EL ÚLTIMO EN PIE</h1>
-    <p class="text-xs text-gray-400 mb-6">Battle Royale de Trivia en Vivo</p>
+<body>
 
-    <!-- PANTALLA: LOGIN JUGADOR -->
-    <div id="sec-login" class="space-y-4">
-      <input id="inp-nombre" type="text" placeholder="Tu Apodo / Nombre" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white text-center">
-      <input id="inp-pase" type="text" placeholder="Pase Desechable (Ej: PIE-1234)" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-yellow-300 font-mono text-center uppercase">
-      <button onclick="unirse()" class="w-full bg-purple-600 hover:bg-purple-500 font-bold py-3 rounded-lg text-white">UNIRSE AL JUEGO 🎮</button>
-      <button onclick="verAdmin()" class="text-xs text-gray-500 underline mt-4 block mx-auto">Acceso Administradora</button>
+    <!-- PANTALLA LOGIN JUGADOR -->
+    <div class="card" id="login-screen">
+        <h1>EL ÚLTIMO EN PIE</h1>
+        <p class="subtitle">Battle Royale Trivia</p>
+        
+        <div class="input-group">
+            <label>Tu Nombre o Apodo</label>
+            <input type="text" id="player-name" placeholder="Ej: Carlos99">
+        </div>
+        <div class="input-group">
+            <label>Pase de Acceso</label>
+            <input type="text" id="player-pass" placeholder="Ej: VIP-4819">
+        </div>
+        
+        <button class="btn btn-primary" onclick="joinGame()">ENTRAR A LA BATALLA 🎮</button>
+        <button class="btn-link" onclick="showAdminLogin()">Acceso Administradora</button>
     </div>
 
-    <!-- PANTALLA: SALA DE ESPERA -->
-    <div id="sec-espera" class="hidden space-y-4">
-      <div class="p-4 bg-purple-950/40 rounded-xl border border-purple-800/40">
-        <p class="text-sm text-purple-300 font-medium">Jugador:</p>
-        <p id="txt-nombre-jugador" class="text-xl font-bold text-yellow-400"></p>
-        <p class="text-xs text-green-400 mt-2">🟢 Conectado y listo</p>
-      </div>
-      <p class="text-sm text-gray-300 animate-pulse">Esperando a que la Administradora inicie la partida...</p>
+    <!-- PANTALLA LOGIN ADMIN -->
+    <div class="card hidden" id="admin-login-screen">
+        <h1>🔐 PANEL ADMIN</h1>
+        <p class="subtitle">Acceso restringido</p>
+        
+        <div class="input-group">
+            <label>Clave Maestra</label>
+            <input type="password" id="admin-pass-input" placeholder="••••••••">
+        </div>
+        
+        <button class="btn btn-primary" onclick="loginAdmin()">INGRESAR</button>
+        <button class="btn-link" onclick="showPlayerLogin()">← Volver</button>
     </div>
 
-    <!-- PANTALLA: ADMIN LOGIN -->
-    <div id="sec-admin-login" class="hidden space-y-4">
-      <h2 class="text-xl font-bold text-purple-400">Panel de Control</h2>
-      <input id="inp-admin-pass" type="password" placeholder="Contraseña Admin" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-center">
-      <button onclick="loginAdmin()" class="w-full bg-yellow-500 font-bold py-3 rounded-lg text-slate-900">Ingresar</button>
+    <!-- PANEL ADMIN -->
+    <div class="card hidden" id="admin-panel">
+        <h1>👑 CONTROL MAESTRO</h1>
+        <p class="subtitle">Administradora</p>
+        
+        <div class="input-group">
+            <label>Monto del Premio ($ MXN):</label>
+            <input type="number" id="prize-input" value="100" onchange="updatePrizeAdmin()">
+        </div>
+
+        <button class="btn btn-success" onclick="requestPass()">+ GENERAR PASE DESECHABLE</button>
+        
+        <div class="pass-box" id="pass-display">
+            <span style="font-size: 0.75rem; color: #a0a0b0; display: block;">Envía este pase único al jugador:</span>
+            <span class="pass-code" id="generated-pass-code">PASS-0000</span>
+        </div>
+
+        <div style="text-align: left; margin-top: 10px;">
+            <label>Jugadores (<span id="player-count">0</span>):</label>
+            <div class="players-list" id="players-container"></div>
+        </div>
+
+        <div id="winner-announcement" style="margin: 10px 0; color: var(--gold); font-weight: bold; display: none;">
+            🏆 GANADOR: <span id="admin-winner-name">---</span>
+        </div>
+
+        <button class="btn btn-primary" onclick="startGame()">🚀 INICIAR JUEGO</button>
+        <button class="btn btn-danger" onclick="resetGame()" style="margin-top: 8px;">🔄 LIMPIAR SALA Y PASES</button>
     </div>
 
-    <!-- PANTALLA: PANEL ADMIN -->
-    <div id="sec-admin-panel" class="hidden space-y-4 text-left">
-      <h2 class="text-lg font-bold text-yellow-400">Panel de Administradora</h2>
-      
-      <div class="bg-slate-800 p-3 rounded-lg">
-        <button onclick="generarPase()" class="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded w-full mb-2">+ Generar Pase Desechable</button>
-        <p class="text-xs text-gray-400">Pases Activos:</p>
-        <div id="lista-pases" class="text-xs font-mono text-yellow-300 mt-1 max-h-24 overflow-y-auto bg-slate-900 p-2 rounded">Ninguno</div>
-      </div>
-
-      <div class="bg-slate-800 p-3 rounded-lg">
-        <p class="text-xs text-gray-400 mb-2">Jugadores en sala: <span id="num-jugadores" class="font-bold text-white">0</span></p>
-        <button onclick="iniciarJuego()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded w-full">🚀 INICIAR PARTIDA EN VIVO</button>
-      </div>
+    <!-- SALA DE ESPERA JUGADOR -->
+    <div class="card hidden" id="waiting-screen">
+        <div class="prize-badge">🏆 PREMIO: $<span class="prize-value">100</span> MXN</div>
+        <h1>⏳ EN SALA DE ESPERA</h1>
+        <p class="subtitle" id="welcome-player-text">¡Bienvenido!</p>
+        <p style="font-size: 0.85rem; color: #a0a0b0;">Esperando que la administradora inicie el juego...</p>
     </div>
 
-  </div>
+    <!-- JUEGO ACTIVO (PREGUNTAS) -->
+    <div class="card hidden" id="game-screen">
+        <div class="prize-badge">🏆 PREMIO: $<span class="prize-value">100</span> MXN</div>
+        <div><span class="level-badge" id="question-level">FÁCIL</span></div>
+        <div class="timer-bar" id="timer-display">15</div>
+        <h3 id="question-text" style="margin-bottom: 15px; font-size: 1.1rem;">Cargando pregunta...</h3>
+        <div id="options-container"></div>
+    </div>
 
-  <script>
-    const socket = io();
-    let miJugador = null;
+    <!-- PANTALLA ELIMINADO / GAME OVER -->
+    <div class="card hidden" id="eliminated-screen">
+        <h1 style="color: var(--neon-red);">💀 ¡HAS SIDO ELIMINADO!</h1>
+        <p class="subtitle" id="eliminated-reason">Respuesta incorrecta</p>
+        <p style="color: #a0a0b0; font-size: 0.9rem;">Quedaste en modo espectador para esta partida.</p>
+    </div>
 
-    function unirse() {
-      const nombre = document.getElementById('inp-nombre').value;
-      const pase = document.getElementById('inp-pase').value.trim().toUpperCase();
+    <!-- PANTALLA VICTORIA / FINAL -->
+    <div class="card hidden" id="victory-screen">
+        <h1 style="color: var(--gold);">🏆 ¡FIN DEL JUEGO!</h1>
+        <p class="subtitle">El ganador absoluto es:</p>
+        <h2 id="winner-display-name" style="font-size: 1.8rem; color: var(--neon-green); margin: 15px 0;">---</h2>
+        <p style="font-size: 1.1rem; color: var(--gold); font-weight: bold;">Se lleva el premio de $<span class="prize-value">100</span> MXN 🎉</p>
+    </div>
 
-      if(!nombre || !pase) return alert('Completa todos los campos');
+    <script>
+        const socket = io();
 
-      socket.emit('jugador-unirse', { nombre, pase }, (res) => {
-        if(res.success) {
-          miJugador = res.jugador;
-          document.getElementById('sec-login').classList.add('hidden');
-          document.getElementById('sec-espera').classList.remove('hidden');
-          document.getElementById('txt-nombre-jugador').innerText = nombre;
-        } else {
-          alert(res.error);
+        function showAdminLogin() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('admin-login-screen').classList.remove('hidden');
         }
-      });
-    }
 
-    function verAdmin() {
-      document.getElementById('sec-login').classList.add('hidden');
-      document.getElementById('sec-admin-login').classList.remove('hidden');
-    }
-
-    function loginAdmin() {
-      const pass = document.getElementById('inp-admin-pass').value;
-      socket.emit('admin-login', pass, (res) => {
-        if(res.success) {
-          document.getElementById('sec-admin-login').classList.add('hidden');
-          document.getElementById('sec-admin-panel').classList.remove('hidden');
-          actualizarPasesUI(res.pases);
-        } else {
-          alert(res.error);
+        function showPlayerLogin() {
+            document.getElementById('admin-login-screen').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
         }
-      });
-    }
 
-    function generarPase() {
-      socket.emit('admin-generar-pase');
-    }
+        function loginAdmin() {
+            if(document.getElementById('admin-pass-input').value === 'Sofi081225') {
+                document.getElementById('admin-login-screen').classList.add('hidden');
+                document.getElementById('admin-panel').classList.remove('hidden');
+            } else { alert('Clave incorrecta'); }
+        }
 
-    function iniciarJuego() {
-      socket.emit('admin-iniciar-juego');
-    }
+        function updatePrizeAdmin() {
+            const val = document.getElementById('prize-input').value;
+            socket.emit('admin-set-prize', val);
+        }
 
-    socket.on('pases-actualizados', (pases) => actualizarPasesUI(pases));
+        function requestPass() { socket.emit('admin-generate-pass'); }
 
-    socket.on('actualizar-jugadores', (lista) => {
-      document.getElementById('num-jugadores').innerText = lista.length;
-    });
+        socket.on('pass-created', (passCode) => {
+            document.getElementById('pass-display').style.display = 'block';
+            document.getElementById('generated-pass-code').innerText = passCode;
+        });
 
-    socket.on('juego-iniciado', () => {
-      alert('¡La partida ha comenzado!');
-    });
+        function resetGame() {
+            if (confirm('¿Reiniciar la sala y limpiar pases?')) {
+                socket.emit('admin-reset');
+                document.getElementById('pass-display').style.display = 'none';
+                document.getElementById('winner-announcement').style.display = 'none';
+            }
+        }
 
-    function actualizarPasesUI(pases) {
-      const div = document.getElementById('lista-pases');
-      div.innerHTML = pases.length ? pases.join('<br>') : 'Sin pases disponibles';
-    }
-  </script>
+        function startGame() { socket.emit('admin-start'); }
+
+        function joinGame() {
+            const name = document.getElementById('player-name').value.trim();
+            const pass = document.getElementById('player-pass').value.trim();
+            if(!name || !pass) return alert('Ingresa tu nombre y tu pase.');
+            socket.emit('player-join', { name, pass });
+        }
+
+        socket.on('join-error', (msg) => alert(msg));
+
+        socket.on('join-success', (data) => {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('waiting-screen').classList.remove('hidden');
+            document.getElementById('welcome-player-text').innerText = `¡Bienvenido ${data.name}!`;
+            updatePrizeDisplay(data.prize);
+        });
+
+        socket.on('update-prize', (val) => updatePrizeDisplay(val));
+
+        function updatePrizeDisplay(val) {
+            document.querySelectorAll('.prize-value').forEach(el => el.innerText = val);
+        }
+
+        socket.on('update-admin-data', (data) => {
+            document.getElementById('player-count').innerText = data.players.length;
+            const container = document.getElementById('players-container');
+            container.innerHTML = data.players.map(p => `
+                <div class="player-item">
+                    <span>👤 ${p.name} ${p.alive ? '🟢' : '💀'}</span>
+                    <span style="color: var(--neon-cyan);">${p.passUsed}</span>
+                </div>
+            `).join('');
+
+            if(data.winner) {
+                document.getElementById('winner-announcement').style.display = 'block';
+                document.getElementById('admin-winner-name').innerText = data.winner;
+            }
+        });
+
+        socket.on('new-question', (data) => {
+            hideAllScreens();
+            document.getElementById('game-screen').classList.remove('hidden');
+            
+            const badge = document.getElementById('question-level');
+            badge.innerText = data.level;
+            badge.className = `level-badge level-${data.level}`;
+
+            document.getElementById('question-text').innerText = `${data.questionNumber}. ${data.q}`;
+            document.getElementById('timer-display').innerText = data.timeLeft;
+
+            const opts = document.getElementById('options-container');
+            opts.innerHTML = data.options.map((opt, idx) => `
+                <button class="option-btn" onclick="sendAnswer(${idx})">${opt}</button>
+            `).join('');
+        });
+
+        function sendAnswer(idx) {
+            socket.emit('submit-answer', idx);
+            document.getElementById('options-container').innerHTML = '<p style="color: var(--neon-cyan);">Respuesta enviada. Esperando a los demás...</p>';
+        }
+
+        socket.on('timer-tick', (t) => {
+            document.getElementById('timer-display').innerText = t;
+        });
+
+        socket.on('player-eliminated', (reason) => {
+            hideAllScreens();
+            document.getElementById('eliminated-screen').classList.remove('hidden');
+            document.getElementById('eliminated-reason').innerText = reason;
+        });
+
+        socket.on('game-over', (data) => {
+            hideAllScreens();
+            document.getElementById('victory-screen').classList.remove('hidden');
+            document.getElementById('winner-display-name').innerText = data.winner;
+        });
+
+        socket.on('reset-client', () => {
+            hideAllScreens();
+            document.getElementById('login-screen').classList.remove('hidden');
+            alert('La partida ha sido reiniciada.');
+        });
+
+        function hideAllScreens() {
+            document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
+        }
+    </script>
 </body>
 </html>
