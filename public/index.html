@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>El Último en Pie</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background-color: #0d0914; color: #ffffff; font-family: sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+  <div class="w-full max-w-md bg-slate-900 border border-purple-900/50 rounded-2xl p-6 shadow-2xl text-center">
+    
+    <!-- ENCABEZADO -->
+    <h1 class="text-3xl font-extrabold text-yellow-400 mb-2">👑 EL ÚLTIMO EN PIE</h1>
+    <p class="text-xs text-gray-400 mb-6">Battle Royale de Trivia en Vivo</p>
+
+    <!-- PANTALLA: LOGIN JUGADOR -->
+    <div id="sec-login" class="space-y-4">
+      <input id="inp-nombre" type="text" placeholder="Tu Apodo / Nombre" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white text-center">
+      <input id="inp-pase" type="text" placeholder="Pase Desechable (Ej: PIE-1234)" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-yellow-300 font-mono text-center uppercase">
+      <button onclick="unirse()" class="w-full bg-purple-600 hover:bg-purple-500 font-bold py-3 rounded-lg text-white">UNIRSE AL JUEGO 🎮</button>
+      <button onclick="verAdmin()" class="text-xs text-gray-500 underline mt-4 block mx-auto">Acceso Administradora</button>
+    </div>
+
+    <!-- PANTALLA: SALA DE ESPERA -->
+    <div id="sec-espera" class="hidden space-y-4">
+      <div class="p-4 bg-purple-950/40 rounded-xl border border-purple-800/40">
+        <p class="text-sm text-purple-300 font-medium">Jugador:</p>
+        <p id="txt-nombre-jugador" class="text-xl font-bold text-yellow-400"></p>
+        <p class="text-xs text-green-400 mt-2">🟢 Conectado y listo</p>
+      </div>
+      <p class="text-sm text-gray-300 animate-pulse">Esperando a que la Administradora inicie la partida...</p>
+    </div>
+
+    <!-- PANTALLA: ADMIN LOGIN -->
+    <div id="sec-admin-login" class="hidden space-y-4">
+      <h2 class="text-xl font-bold text-purple-400">Panel de Control</h2>
+      <input id="inp-admin-pass" type="password" placeholder="Contraseña Admin" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-center">
+      <button onclick="loginAdmin()" class="w-full bg-yellow-500 font-bold py-3 rounded-lg text-slate-900">Ingresar</button>
+    </div>
+
+    <!-- PANTALLA: PANEL ADMIN -->
+    <div id="sec-admin-panel" class="hidden space-y-4 text-left">
+      <h2 class="text-lg font-bold text-yellow-400">Panel de Administradora</h2>
+      
+      <div class="bg-slate-800 p-3 rounded-lg">
+        <button onclick="generarPase()" class="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded w-full mb-2">+ Generar Pase Desechable</button>
+        <p class="text-xs text-gray-400">Pases Activos:</p>
+        <div id="lista-pases" class="text-xs font-mono text-yellow-300 mt-1 max-h-24 overflow-y-auto bg-slate-900 p-2 rounded">Ninguno</div>
+      </div>
+
+      <div class="bg-slate-800 p-3 rounded-lg">
+        <p class="text-xs text-gray-400 mb-2">Jugadores en sala: <span id="num-jugadores" class="font-bold text-white">0</span></p>
+        <button onclick="iniciarJuego()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded w-full">🚀 INICIAR PARTIDA EN VIVO</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const socket = io();
+    let miJugador = null;
+
+    function unirse() {
+      const nombre = document.getElementById('inp-nombre').value;
+      const pase = document.getElementById('inp-pase').value.trim().toUpperCase();
+
+      if(!nombre || !pase) return alert('Completa todos los campos');
+
+      socket.emit('jugador-unirse', { nombre, pase }, (res) => {
+        if(res.success) {
+          miJugador = res.jugador;
+          document.getElementById('sec-login').classList.add('hidden');
+          document.getElementById('sec-espera').classList.remove('hidden');
+          document.getElementById('txt-nombre-jugador').innerText = nombre;
+        } else {
+          alert(res.error);
+        }
+      });
+    }
+
+    function verAdmin() {
+      document.getElementById('sec-login').classList.add('hidden');
+      document.getElementById('sec-admin-login').classList.remove('hidden');
+    }
+
+    function loginAdmin() {
+      const pass = document.getElementById('inp-admin-pass').value;
+      socket.emit('admin-login', pass, (res) => {
+        if(res.success) {
+          document.getElementById('sec-admin-login').classList.add('hidden');
+          document.getElementById('sec-admin-panel').classList.remove('hidden');
+          actualizarPasesUI(res.pases);
+        } else {
+          alert(res.error);
+        }
+      });
+    }
+
+    function generarPase() {
+      socket.emit('admin-generar-pase');
+    }
+
+    function iniciarJuego() {
+      socket.emit('admin-iniciar-juego');
+    }
+
+    socket.on('pases-actualizados', (pases) => actualizarPasesUI(pases));
+
+    socket.on('actualizar-jugadores', (lista) => {
+      document.getElementById('num-jugadores').innerText = lista.length;
+    });
+
+    socket.on('juego-iniciado', () => {
+      alert('¡La partida ha comenzado!');
+    });
+
+    function actualizarPasesUI(pases) {
+      const div = document.getElementById('lista-pases');
+      div.innerHTML = pases.length ? pases.join('<br>') : 'Sin pases disponibles';
+    }
+  </script>
+</body>
+</html>
